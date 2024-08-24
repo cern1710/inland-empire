@@ -31,7 +31,7 @@ async def scrape_user_ratings(username: str):
             containers = tree.xpath("//li[@class='poster-container']")
             for container in containers:
                 # film_name = container.xpath(".//div[@class='linked-film-poster']/@data-film-slug")
-                film_name = container.xpath(".//img[@class='image']/@alt")
+                film_name = container.xpath(".//img[@class='image']/@alt")[0]
                 liked = bool(container.xpath(".//span[contains(@class, 'like')]"))
 
                 # Check if a rating exists and fetch the rating if there is one
@@ -49,3 +49,12 @@ async def scrape_user_ratings(username: str):
                 })
 
         return film_data
+
+import time
+now = time.time()
+film_data = asyncio.run(scrape_user_ratings("cern1710"))
+print(time.time() - now)
+for film in film_data:
+    f = open("elihayes.txt", "a")
+    f.write(f"Film: {film['film_name']}, Liked: {film['liked']}, Rating: {film['rating']}\n")
+    f.close()
