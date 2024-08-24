@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+import concurrent.futures
 
 def scrape_user_ratings(username: str):
     url = f"https://letterboxd.com/{username}/films/by/date"
@@ -20,7 +21,10 @@ def scrape_user_ratings(username: str):
             page_col_main_section = page_body.find("section", class_="col-main")
             return page_col_main_section.find_all("li", class_="poster-container")
 
-    containers = [container for i in range(num_pages+1) for container in _fetch_page(i)]
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = executor.map(_fetch_page, range(num_pages + 1))
+
+    containers = [container for result in results for container in result]
 
     film_data = []
     for container in containers:
