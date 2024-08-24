@@ -49,12 +49,3 @@ async def scrape_user_ratings(username: str):
                 })
 
         return film_data
-
-import time
-now = time.time()
-film_data = asyncio.run(scrape_user_ratings("cern1710"))
-print(time.time() - now)
-for film in film_data:
-    f = open("elihayes.txt", "a")
-    f.write(f"Film: {film['film_name']}, Liked: {film['liked']}, Rating: {film['rating']}\n")
-    f.close()
