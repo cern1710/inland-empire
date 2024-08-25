@@ -5,7 +5,7 @@ from pymongo.errors import ConnectionFailure, ConfigurationError
 from urllib.parse import quote_plus
 from typing import Tuple
 
-DEFAULT_CONFIG_PATH = "config.json"
+DEFAULT_CONFIG_PATH = "../config.json"
 MONGO = "mongodb_local"
 
 def get_mongodb_client(config_path: str) -> Tuple[MongoClient, dict]:
