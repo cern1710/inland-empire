@@ -7,6 +7,11 @@ def insert_movie(db: Database, movie_data: Dict[str, Any]) -> Dict[str, Any]:
     collection = db['movies']
     query = {'tmdb_id': movie_data['tmdb_id']}  # TMDB DB = identifier
 
+    # Reformat genre IDs
+    if 'genre_ids' in movie_data \
+            and not isinstance(movie_data['genre_ids'], list):
+        movie_data['genre_ids'] = list(movie_data['genre_ids'])
+
     # Enable upsert: either insert a new document or update an existing one
     result: UpdateResult = collection.update_one(query,
                                                  {'$set': movie_data},

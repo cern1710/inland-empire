@@ -21,6 +21,7 @@ def get_tmdb_data(film_name: str) -> Dict[str, Any]:
     if search:
         tmdb_data = {
             'tmdb_id': search[0].id,
+            'title': search[0].title,
             'original_language': search[0].original_language,
             'genre_ids': search[0].genre_ids,
             'release_date': search[0].release_date,
