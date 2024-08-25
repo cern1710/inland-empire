@@ -11,8 +11,11 @@ Create a `config.json` file in `/backend` with the following:
   "tmdb": {
     "api_key": "YOUR_TMDB_API_KEY"
   },
-
-  "mongodb": {
+  "mongodb_local": {
+    "uri": "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.0.2",
+    "database": "letterboxd_db"
+  },
+  "mongodb_atlas": {
     "uri": "mongodb+srv://<username>:<password>@<username>.ivddo.mongodb.net/?retryWrites=true&w=majority",
     "database": "letterboxd_db",
     "username": "YOUR_CLUSTER_NAME",
@@ -21,4 +24,8 @@ Create a `config.json` file in `/backend` with the following:
 }
 ```
 
-This will allow the application to connect to your MongoDB Atlas cluster.
+This will allow the application to connect to either your local MongoDB server by default. If you want to connect to your MongoDB Atlas cluster, change this line in `database.py`:
+
+```py
+MONGO = "mongodb_atlas" # Change the "mongodb_local" string
+```
