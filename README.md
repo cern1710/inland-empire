@@ -4,6 +4,14 @@ A movie recommender system based on Letterboxd data. Inland Empire provides tail
 
 ## Setting up
 
+### Redis
+
+You can install Redis [here](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/).
+
+### MongoDB
+
+Make sure you downloaded MongoDB Community Server from [here](https://www.mongodb.com/try/download/community).
+
 Create a `config.json` file in `/backend` with the following:
 
 ```json
