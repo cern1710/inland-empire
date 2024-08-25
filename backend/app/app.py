@@ -4,9 +4,11 @@ from database.db_utils import *
 from bson import json_util
 import json
 
+# Declare MongoDB connection here; avoid reconnection per request
+client, db = connect_to_mongodb("config.json")
+
 def create_app():
     app = Flask(__name__)
-    client, db = connect_to_mongodb("config.json")
 
     @app.route('/movies', methods=['GET'])
     def get_movies():
