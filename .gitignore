@@ -1,4 +1,5 @@
 __pycache__/
 *.html
 *.json
+*.rdb
 .DS_Store
