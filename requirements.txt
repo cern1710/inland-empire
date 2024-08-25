@@ -1,0 +1,4 @@
+aiohttp==3.10.5
+lxml==4.9.4
+pymongo==4.8.0
+tmdbv3api==1.9.0
