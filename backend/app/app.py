@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
-from database import connect_to_mongodb
-from db_utils import *
+from database.connect_to_db import connect_to_mongodb
+from database.db_utils import *
 from bson import json_util
 import json
 
 def create_app():
     app = Flask(__name__)
-    client, db = connect_to_mongodb()
+    client, db = connect_to_mongodb("config.json")
 
     @app.route('/movies', methods=['GET'])
     def get_movies():

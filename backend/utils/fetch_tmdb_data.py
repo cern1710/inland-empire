@@ -2,7 +2,7 @@ import json
 from tmdbv3api import TMDb, Movie, Genre
 from typing import Dict, Any, Tuple
 
-DEFAULT_CONFIG_PATH = "config.json"
+DEFAULT_CONFIG_PATH = "../config.json"
 
 def init_tmdb() -> Tuple[TMDb, Movie, Genre]:
     tmdb = TMDb()
