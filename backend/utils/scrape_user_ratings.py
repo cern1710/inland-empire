@@ -30,7 +30,8 @@ async def scrape_user_ratings(username: str):
             tree = html.fromstring(page)
             containers = tree.xpath("//li[@class='poster-container']")
             for container in containers:
-                film_slug = container.xpath(".//div[@class='linked-film-poster']/@data-film-slug")
+                film_slug = container.xpath(".//div[contains(@class, \
+                                            'linked-film-poster')]/@data-film-slug")[0]
                 liked = bool(container.xpath(".//span[contains(@class, 'like')]"))
 
                 # Check if a rating exists and fetch the rating if there is one

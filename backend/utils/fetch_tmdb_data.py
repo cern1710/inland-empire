@@ -39,16 +39,17 @@ def get_tmdb_data(tmdb_id: int) -> Optional[Dict[str, Any]]:
         'directors': directors,
         'original_language': details.original_language,
         'genres': genres,
-        # 'release_date': release_date,
         'release_year': release_year,
         'popularity': details.popularity,
-        'tmdb_vote_average': details.vote_average,
-        'tmdb_vote_count': details.vote_count,
         'runtime': details.runtime,
+        # 'num_ratings': details.vote_count,
+        # 'avg_rating': details.vote_average,
+        # 'release_date': release_date,
         # 'overview': details.overview,
         # 'budget': details.budget,
         # 'revenue': details.revenue,
         # 'poster_path': details.poster_path,
         # 'backdrop_path': details.backdrop_path
+        'user_rating': []   # Initialized as an empty list
     }
     return tmdb_data
