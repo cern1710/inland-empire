@@ -42,5 +42,5 @@ async def scrape_movies(movie_list: list):
         tasks = []
         for movie in movie_list:
             tasks.append(get_movie_data(url.format(movie), session))
-        await asyncio.gather(*tasks)
-    return tasks
+        movie_info = await asyncio.gather(*tasks)
+    return movie_info
