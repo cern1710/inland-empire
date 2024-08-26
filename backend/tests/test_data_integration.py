@@ -39,15 +39,13 @@ async def main():
 
 if __name__ == "__main__":
     tmdb_ids = asyncio.run(main())
+    tmdb_ids = [tmdb_id for tmdb_id in tmdb_ids
+                if tmdb_id.get('tmdb_id') != -1]
     init_tmdb()
     tmdb_data = []
 
-    count = 0
+    # TODO: put a 50 request per second limit here
     for tmdb_id in tmdb_ids:
-        tmdb_data.append(get_tmdb_data(tmdb_id['tmdb_id']))
-        count += 1
-        if count >= 50:
-            time.sleep(2.0)
-            count = 0
-
-    print(tmdb_data)
+        movie = get_tmdb_data(tmdb_id['tmdb_id'])
+        tmdb_data.append(movie)
+        print(movie)
