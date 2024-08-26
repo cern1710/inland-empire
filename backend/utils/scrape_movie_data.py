@@ -14,12 +14,16 @@ async def get_movie_data(url, session):
             print(f"No TMDb link found for {url}")
             return {'url': url, 'tmdb_id': None}
         tmdb_link = tmdb_links[0]
-        media_type = '/tv/' if ('/tv/' in tmdb_link) else '/movie/'
+        if '/tv/' in tmdb_link:
+            media_type, is_movie = '/tv/', False
+        else:
+            media_type, is_movie = '/movie/', True
         tmdb_id = tmdb_link.split(media_type)[1].strip('/').split('-')[0]
 
         movie_data = {
             'film': url,
             'tmdb_id': tmdb_id,
+            'is_movie': is_movie
         }
         return movie_data
 

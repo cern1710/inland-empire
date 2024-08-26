@@ -1,9 +1,11 @@
 import sys
 import os
 import asyncio
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import *
+from database import *
 
 def split_list(lst, chunk_size):
     return [lst[i:i + chunk_size]
@@ -37,4 +39,15 @@ async def main():
 
 if __name__ == "__main__":
     tmdb_ids = asyncio.run(main())
-    print(tmdb_ids)
+    init_tmdb()
+    tmdb_data = []
+
+    count = 0
+    for tmdb_id in tmdb_ids:
+        tmdb_data.append(get_tmdb_data(tmdb_id['tmdb_id']))
+        count += 1
+        if count >= 50:
+            time.sleep(2.0)
+            count = 0
+
+    print(tmdb_data)
