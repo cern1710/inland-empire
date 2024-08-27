@@ -64,6 +64,10 @@ async def scrape_user_ratings(username: str) -> List[Dict[str, Any]]:
         return film_data
 
 async def scrape_popular_pages(num_pages: int) -> List[Dict[str, Any]]:
+    """Scrapes Letterboxd by most popular movies.
+
+    WARNING: Very Slow. We may need to consider another method.
+    """
     async def _fetch_page(page, url):
         await page.goto(url)
         await page.wait_for_selector('.poster-container')
