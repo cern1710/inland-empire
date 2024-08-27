@@ -41,7 +41,6 @@ def get_tmdb_data(tmdb_id: int) -> Optional[Dict[str, Any]]:
         'tmdb_id': tmdb_id,
         'title': details.title,
         'directors': directors,
-        'original_language': details.original_language,
         'genres': genres,
         'release_year': release_year,
         'popularity': details.popularity,
