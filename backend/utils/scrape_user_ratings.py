@@ -1,9 +1,12 @@
 import asyncio
 import aiohttp
 from lxml import html
+from typing import List, Dict, Any
 
-async def scrape_user_ratings(username: str):
-    # Inner function fetching page content from a specified URL
+PAGES_PER_BATCH = 30
+BATCH_DELAY = 0.5
+
+async def scrape_user_ratings(username: str) -> List[Dict[str, Any]]:
     async def _fetch_page(session, url):
         async with session.get(url) as response:
             return await response.text()
@@ -22,8 +25,16 @@ async def scrape_user_ratings(username: str):
         urls = [base_url] + [f"{base_url}/page/{page_num}"
                              for page_num in range(2, num_pages + 1)]
 
-        # Fetch all pages concurrently
-        pages = await asyncio.gather(*(_fetch_page(session, url) for url in urls))
+        # Fetch pages in batches with delay
+        pages = []
+        for i in range(0, len(urls), PAGES_PER_BATCH):
+            batch_urls = urls[i:i+PAGES_PER_BATCH]
+            batch_pages = await asyncio.gather(
+                *(_fetch_page(session, url) for url in batch_urls)
+            )
+            pages.extend(batch_pages)
+            if i + PAGES_PER_BATCH < len(urls):
+                await asyncio.sleep(BATCH_DELAY)
 
         film_data = []
         for page in pages:
