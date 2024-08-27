@@ -12,6 +12,7 @@ PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PARENT_DIR)
 
 from utils import scrape_user_ratings, scrape_movies
+from database import connect_to_mongodb, insert_movie
 
 async def get_user_movie_data(username: str) -> List[Dict[str, Any]]:
     film_slugs = await scrape_user_ratings(username)
@@ -33,7 +34,7 @@ async def get_user_movie_data(username: str) -> List[Dict[str, Any]]:
 
     return user_movie_data
 
-def write_to_csv(username: str, user_movie_data: List[Dict[str, any]]) -> None:
+def write_to_csv(username: str, user_movie_data: List[Dict[str, Any]]) -> None:
     def _safe_get(data: Dict[str, any], key: str, default: str = ''):
         return str(data.get(key, default)).replace(',', ';')
 
@@ -64,7 +65,10 @@ def write_to_csv(username: str, user_movie_data: List[Dict[str, any]]) -> None:
 
     print(f"Data has been written to {username}.csv")
 
-if __name__ == "__main__":
-    username = "mscorsese"
+def save_user_data_to_db(username: str) -> None:
+    """Saves a user's movie ratings into the database."""
     user_movie_data = asyncio.run(get_user_movie_data(username))
-    write_to_csv(username, user_movie_data)
+    _, db = connect_to_mongodb()
+    for movie in user_movie_data:
+        insert_movie(db, movie)
+    print(f"All movies in {username}'s diary have been added to the database.")
