@@ -2,7 +2,7 @@ import asyncio
 from aiohttp import ClientSession
 from lxml import html
 
-async def get_movie_data(url, session):
+async def get_movie_data(url, session, movie, username):
     """Gets a movie's TMDB ID from a Letterboxd URL."""
     async with session.get(url) as r:
         response = await r.text()
@@ -52,16 +52,27 @@ async def get_movie_data(url, session):
             'release_year': year,
             'num_ratings': num_ratings,
             'avg_rating': avg_rating,
-            'runtime': runtime
+            'runtime': runtime,
+            'user_ratings': []
         }
+
+        if movie != None:
+            movie_data['user_ratings'].append({
+                'username': username,
+                'liked': movie['liked'],
+                'rating': movie['rating']
+            })
+
         return movie_data
 
-async def scrape_movies(movie_list: list):
+async def scrape_movies(movie_list: list, username: str):
     url = "https://letterboxd.com/film/{}/"
 
     async with ClientSession() as session:
         tasks = []
         for movie in movie_list:
-            tasks.append(get_movie_data(url.format(movie['film_slug']), session))
+            tasks.append(get_movie_data(
+                url.format(movie['film_slug']), session, movie, username
+            ))
         movie_info = await asyncio.gather(*tasks)
     return movie_info
