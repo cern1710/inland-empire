@@ -25,8 +25,10 @@ async def get_movie_data(url, session, movie, username):
                             and contains(@class, "filmtitle")] \
                             //span[contains(@class, "name")]/text()')[0].strip()
         year = int(tree.xpath('//div[@class="releaseyear"]/a/text()')[0].strip())
-        directors = tree.xpath('//span[@class="directorlist"]\
-                               //a[@class="contributor"]/@href')
+        directors_raw = tree.xpath('//span[@class="directorlist"]\
+                                   //a[@class="contributor"]/@href')
+        directors = [director.split('/')[2] for director in directors_raw
+                     if director.startswith('/director/')]
         ratings = tree.xpath('//meta[@name="twitter:data2"]/@content')
         avg_rating = float(ratings[0].split()[0]) if ratings else None
 
