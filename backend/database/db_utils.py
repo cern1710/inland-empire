@@ -7,11 +7,6 @@ def insert_movie(db: Database, movie_data: Dict[str, Any]) -> Dict[str, Any]:
     collection = db['movies']
     query = {'tmdb_id': movie_data['tmdb_id']}  # TMDB DB = identifier
 
-    # Reformat genre IDs
-    if 'genre_ids' in movie_data \
-            and not isinstance(movie_data['genre_ids'], list):
-        movie_data['genre_ids'] = list(movie_data['genre_ids'])
-
     # Enable upsert: either insert a new document or update an existing one
     result: UpdateResult = collection.update_one(query,
                                                  {'$set': movie_data},
@@ -35,6 +30,18 @@ def get_all_movies(db: Database) -> List[Dict[str, Any]]:
 def delete_movie_by_id(db: Database, tmdb_id: int) -> Dict[str, Any]:
     """Delete a movie from the database by its TMDB ID."""
     result: DeleteResult = db['movies'].delete_one({'tmdb_id': tmdb_id})
+    return {
+        'acknowledged': result.acknowledged,
+        'deleted_count': result.deleted_count
+    }
+
+def purge_db(db: Database) -> Dict[str, Any]:
+    """Delete entire movies collection from the database.
+
+    WARNING: Use with extreme caution. This operation will
+             delete everything from the database.
+    """
+    result: DeleteResult = db['movies'].delete_many({})
     return {
         'acknowledged': result.acknowledged,
         'deleted_count': result.deleted_count
