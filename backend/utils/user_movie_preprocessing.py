@@ -37,32 +37,30 @@ def write_to_csv(username: str, user_movie_data: List[Dict[str, any]]) -> None:
     def _safe_get(data: Dict[str, any], key: str, default: str = ''):
         return str(data.get(key, default)).replace(',', ';')
 
-    with open(f"{username}.csv", "w", newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(["tmdb_id", "title", "directors", "genres",
-                         "release_year", "num_ratings", "avg_rating",
-                         "runtime", "username", "liked", "rating"])
+    filename = f"{username}.csv"
+    fieldnames = ["tmdb_id", "title", "directors", "genres",
+                    "release_year", "num_ratings", "avg_rating",
+                    "runtime", "username", "liked", "rating"]
+
+    with open(filename, "w", newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
 
         for data in user_movie_data:
             try:
-                writer.writerow([
-                    _safe_get(data, 'tmdb_id'),
-                    _safe_get(data, 'title'),
-                    _safe_get(data, 'directors'),
-                    _safe_get(data, 'genres'),
-                    _safe_get(data, 'release_year'),
-                    _safe_get(data, 'num_ratings'),
-                    _safe_get(data, 'avg_rating'),
-                    _safe_get(data, 'runtime'),
-                    _safe_get(data['user_ratings'][0], 'username')
-                                if data.get('user_ratings') else '',
-                    _safe_get(data['user_ratings'][0], 'liked')
-                                if data.get('user_ratings') else '',
-                    _safe_get(data['user_ratings'][0], 'rating')
-                                if data.get('user_ratings') else ''
-                ])
+                row = {field: _safe_get(data, field)
+                        for field in fieldnames[:8]}
+                if data.get('user_ratings'):
+                    user_rating = data['user_ratings'][0]
+                    row.update({
+                        'username': _safe_get(user_rating, 'username'),
+                        'liked': _safe_get(user_rating, 'liked'),
+                        'rating': _safe_get(user_rating, 'rating')
+                    })
+                writer.writerow(row)
             except Exception as e:
-                print(f"Exception {e} caught when processing {data}")
+                print(f"Error processing movie data: {e}")
+                print(f"Problematic data: {data}")
 
     print(f"Data has been written to {username}.csv")
 
