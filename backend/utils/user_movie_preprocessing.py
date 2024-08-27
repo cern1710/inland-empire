@@ -4,7 +4,7 @@ import asyncio
 import csv
 from typing import List, Dict, Any
 
-SLEEP_INTERVAL = 0.5
+SLEEP_INTERVAL = 1.0
 CHUNK_SIZE = 200
 
 # Add parent directory to Python path

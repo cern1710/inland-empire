@@ -8,64 +8,74 @@ async def get_movie_data(url, session, movie, username):
         response = await r.text()
         tree = html.fromstring(response)
 
-        # Some lxml magic to fetch all our required data here
-        tmdb_links = tree.xpath('//a[@data-track-action="TMDb"]/@href')
-        if not tmdb_links:
-            print(f"No TMDb link found for {url}")
-            return {'url': url, 'tmdb_id': None}
-        tmdb_link = tmdb_links[0]
+        try:
+            # Some lxml magic to fetch all our required data here
+            tmdb_links = tree.xpath('//a[@data-track-action="TMDb"]/@href')
+            if not tmdb_links:
+                print(f"No TMDb link found for {url}")
+                return {'url': url, 'tmdb_id': None}
 
-        # TODO: Handle miniseries in the future
-        if '/tv/' in tmdb_link:
-            return {'film': None, 'tmdb_id': -1}
+            tmdb_link = tmdb_links[0]
 
-        tmdb_id = tmdb_link.split('/movie')[1].strip('/').split('-')[0]
+            # TODO: Handle miniseries in the future
+            if '/tv/' in tmdb_link:
+                return {'film': None, 'tmdb_id': -1}
 
-        title = tree.xpath('//h1[contains(@class, "headline-1") \
-                            and contains(@class, "filmtitle")] \
-                            //span[contains(@class, "name")]/text()')[0].strip()
-        year = int(tree.xpath('//div[@class="releaseyear"]/a/text()')[0].strip())
-        directors_raw = tree.xpath('//span[@class="directorlist"]\
-                                   //a[@class="contributor"]/@href')
-        directors = [director.split('/')[2] for director in directors_raw
-                     if director.startswith('/director/')]
-        ratings = tree.xpath('//meta[@name="twitter:data2"]/@content')
-        avg_rating = float(ratings[0].split()[0]) if ratings else None
+            tmdb_id = tmdb_link.split('/movie')[1].strip('/').split('-')[0]
 
-        # Use find() for pattern matching and slicing
-        num_ratings = None
-        if (start_index := response.find('"ratingCount":')) != -1:
-            end_index = response.find(',', start_index)
-            num_ratings = int(response[start_index + len('"ratingCount":') : end_index])
+            title = tree.xpath('//h1[contains(@class, "headline-1") \
+                                and contains(@class, "filmtitle")] \
+                                //span[contains(@class, "name")]/text()')[0].strip()
 
-        runtime = tree.xpath('//p[contains(@class, \
-                             "text-link")]//text()')[0].strip().split()[0]
-        runtime = int(runtime) if runtime.isdigit() else None
+            year_elements = tree.xpath('//div[@class="releaseyear"]/a/text()')
+            year = int(year_elements[0].strip()) if year_elements else None
 
-        # Remove 'Show All...' if 'genre' includes it
-        genres = tree.xpath('//div[@class="text-sluglist capitalize"]//a/text()')
-        genres = [genre for genre in genres if genre != "Show All…"]
+            directors_raw = tree.xpath('//span[@class="directorlist"]\
+                                       //a[@class="contributor"]/@href')
+            directors = [director.split('/')[2] for director in directors_raw
+                         if director.startswith('/director/')]
+            ratings = tree.xpath('//meta[@name="twitter:data2"]/@content')
+            avg_rating = float(ratings[0].split()[0]) if ratings else None
 
-        movie_data = {
-            'tmdb_id': tmdb_id,
-            'title': title,
-            'directors': directors,
-            'genres': genres,
-            'release_year': year,
-            'num_ratings': num_ratings,
-            'avg_rating': avg_rating,
-            'runtime': runtime,
-            'user_ratings': []
-        }
+            # Use find() for pattern matching and slicing
+            num_ratings = None
+            if (start_index := response.find('"ratingCount":')) != -1:
+                end_index = response.find(',', start_index)
+                num_ratings = int(response[start_index + len('"ratingCount":') : end_index])
 
-        if movie != None:
-            movie_data['user_ratings'].append({
-                'username': username,
-                'liked': movie['liked'],
-                'rating': movie['rating']
-            })
+            runtime_raw = tree.xpath('//p[contains(@class, "text-link")]//text()')
+            runtime = None
+            if runtime_raw:
+                runtime_str = runtime_raw[0].strip().split()[0]
+                runtime = int(runtime_str) if runtime_str.isdigit() else None
 
-        return movie_data
+            # Remove 'Show All...' if 'genre' includes it
+            genres = tree.xpath('//div[@class="text-sluglist capitalize"]//a/text()')
+            genres = [genre for genre in genres if genre != "Show All…"]
+
+            movie_data = {
+                'tmdb_id': tmdb_id,
+                'title': title,
+                'directors': directors,
+                'genres': genres,
+                'release_year': year,
+                'num_ratings': num_ratings,
+                'avg_rating': avg_rating,
+                'runtime': runtime,
+                'user_ratings': []
+            }
+
+            if movie != None:
+                movie_data['user_ratings'].append({
+                    'username': username,
+                    'liked': movie['liked'],
+                    'rating': movie['rating']
+                })
+
+            return movie_data
+        except IndexError:
+            print(f"Error processing data for {url}!")
+            return None
 
 async def scrape_movies(movie_list: list, username: str):
     url = "https://letterboxd.com/film/{}/"
