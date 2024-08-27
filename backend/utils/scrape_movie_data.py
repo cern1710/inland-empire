@@ -1,8 +1,9 @@
 import asyncio
 from aiohttp import ClientSession
 from lxml import html
+from typing import List, Dict, Any
 
-async def get_movie_data(url, session, movie, username):
+async def get_movie_data(url, session, movie, username) -> Dict[str, Any]:
     """Gets a movie's TMDB ID from a Letterboxd URL."""
     async with session.get(url) as r:
         response = await r.text()
@@ -65,7 +66,7 @@ async def get_movie_data(url, session, movie, username):
                 'user_ratings': []
             }
 
-            if movie != None:
+            if movie != None and username != None:
                 movie_data['user_ratings'].append({
                     'username': username,
                     'liked': movie['liked'],
@@ -77,7 +78,7 @@ async def get_movie_data(url, session, movie, username):
             print(f"Error processing data for {url}!")
             return None
 
-async def scrape_movies(movie_list: list, username: str):
+async def scrape_movies(movie_list: list, username: str) -> List[Dict[str, Any]]:
     url = "https://letterboxd.com/film/{}/"
 
     async with ClientSession() as session:
