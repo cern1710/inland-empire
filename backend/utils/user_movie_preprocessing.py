@@ -2,6 +2,7 @@ import sys
 import os
 import asyncio
 import csv
+from typing import List, Dict, Any
 
 SLEEP_INTERVAL = 0.5
 CHUNK_SIZE = 200
@@ -12,7 +13,7 @@ sys.path.append(PARENT_DIR)
 
 from utils import scrape_user_ratings, scrape_movies
 
-async def get_user_movie_data(username: str):
+async def get_user_movie_data(username: str) -> List[Dict[str, any]]:
     film_slugs = await scrape_user_ratings(username)
     print(f"Found {len(film_slugs)} films for {username}!")
 
