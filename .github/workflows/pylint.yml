@@ -18,6 +18,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pylint
+        pip install aiohttp==3.10.5 flask==3.0.3 lxml==4.9.4 playwright==1.46.0 pymongo==4.8.0 pytest==8.3.2 pytest-asyncio==0.24.0 redis==5.0.8 tmdbv3api==1.9.0 urllib3==2.2.1
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')

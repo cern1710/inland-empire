@@ -2,6 +2,8 @@ import asyncio
 import aiohttp
 from lxml import html
 from typing import List, Dict, Any
+from playwright.async_api import async_playwright
+import re
 
 PAGES_PER_BATCH = 30
 BATCH_DELAY = 0.5
@@ -59,4 +61,36 @@ async def scrape_user_ratings(username: str) -> List[Dict[str, Any]]:
                     "rating": rating
                 })
 
+        return film_data
+
+async def scrape_popular_pages(num_pages: int) -> List[Dict[str, Any]]:
+    """Scrapes Letterboxd by most popular movies.
+
+    WARNING: Very Slow. We may need to consider another method.
+    """
+    async def _fetch_page(page, url):
+        await page.goto(url)
+        await page.wait_for_selector('.poster-container')
+        return await page.content()
+
+    base_url = "https://letterboxd.com/films/popular/"
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+
+        urls = [base_url] + [f"{base_url}page/{page_num}/"
+                             for page_num in range(2, num_pages + 1)]
+
+        film_data = []
+        for url in urls:
+            content = await _fetch_page(page, url)
+            film_slugs = re.findall(r'data-film-slug="([^"]+)"', content)
+            film_data.extend([{"film_slug": slug} for slug in film_slugs])
+
+
+            if urls.index(url) < len(urls) - 1:
+                await asyncio.sleep(BATCH_DELAY)
+
+        await browser.close()
         return film_data
