@@ -1,3 +1,4 @@
+import pytest
 import sys
 import os
 import asyncio
@@ -5,8 +6,14 @@ import asyncio
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import *
 
-if __name__ == "__main__":
-    movies = [{'film_slug':'inland-empire'}, {'film_slug':'satantango'},
-              {'film_slug':'sicily'}]
-    info = asyncio.run(scrape_movies(movies))
-    print(info)
+@pytest.mark.asyncio
+async def test_scrape_movies():
+    username = "mscorsese"
+    expected_info = [
+        {
+            'film_slug': 'yeelen',
+            'title': 'yeelen',
+        },
+    ]
+    user_ratings = await scrape_user_ratings(username)
+    info = await scrape_movies(user_ratings, username=username)
