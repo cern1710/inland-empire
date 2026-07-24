@@ -3,6 +3,8 @@ from .scrape_movie_gallery import scrape_user_ratings, scrape_popular_pages
 from .scrape_movie_data import scrape_movies
 from .user_movie_preprocessing import (
     save_user_data_to_db,
+    scrape_user,
+    scrape_user_to_csv,
     write_to_csv,
     get_user_movie_data,
 )
@@ -14,6 +16,8 @@ __all__ = [
     "scrape_popular_pages",
     "scrape_movies",
     "save_user_data_to_db",
+    "scrape_user",
+    "scrape_user_to_csv",
     "write_to_csv",
     "get_user_movie_data",
 ]

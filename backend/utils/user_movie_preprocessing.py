@@ -11,7 +11,8 @@ CHUNK_SIZE = 200
 PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PARENT_DIR)
 
-from utils import scrape_user_ratings, scrape_movies
+from .scrape_movie_gallery import scrape_user_ratings
+from .scrape_movie_data import scrape_movies
 from database import connect_to_mongodb, insert_movie
 
 
@@ -80,9 +81,27 @@ def write_to_csv(username: str, user_movie_data: List[Dict[str, Any]]) -> None:
     print(f"Data has been written to {username}.csv")
 
 
+def scrape_user(username: str) -> List[Dict[str, Any]]:
+    """Scrapes every film a user has logged, with their rating and like.
+
+    This is the synchronous entry point: given a Letterboxd username, it
+    returns the fully populated movie data.
+
+        >>> movies = scrape_user("cern1710")
+    """
+    return asyncio.run(get_user_movie_data(username))
+
+
+def scrape_user_to_csv(username: str) -> List[Dict[str, Any]]:
+    """Scrapes a user's films and writes them to <username>.csv."""
+    user_movie_data = scrape_user(username)
+    write_to_csv(username, user_movie_data)
+    return user_movie_data
+
+
 def save_user_data_to_db(username: str) -> None:
     """Saves a user's movie ratings into the database."""
-    user_movie_data = asyncio.run(get_user_movie_data(username))
+    user_movie_data = scrape_user(username)
     _, db = connect_to_mongodb()
     for movie in user_movie_data:
         insert_movie(db, movie)

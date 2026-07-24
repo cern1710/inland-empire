@@ -1,81 +1,101 @@
 import asyncio
-import aiohttp
-from lxml import html
-from typing import List, Dict, Any
-from playwright.async_api import async_playwright
 import re
+from typing import Any, Dict, List
 
-PAGES_PER_BATCH = 30
+from curl_cffi import requests
+from lxml import html
+from playwright.async_api import async_playwright
+
+from .http_utils import fetch_with_backoff
+
+PAGES_PER_BATCH = 12
 BATCH_DELAY = 0.5
+IMPERSONATE = "chrome"
+REQUEST_TIMEOUT = 30
+
+# Letterboxd stores ratings on a 1-10 scale (rated-10 == 5 stars)
+RATING_SCALE = 2
+
+
+def _parse_gallery_page(page_html: str) -> List[Dict[str, Any]]:
+    """Extracts film slugs, ratings and likes from a poster grid page."""
+    tree = html.fromstring(page_html)
+    film_data = []
+
+    for item in tree.xpath('//li[contains(@class, "griditem")]'):
+        slugs = item.xpath(".//div[@data-item-slug]/@data-item-slug")
+        if not slugs:
+            continue
+
+        # The rating span carries a rated-N class; N is out of 10.
+        rating = None
+        rating_classes = item.xpath(
+            './/span[contains(concat(" ", normalize-space(@class), " "), " rating ")]'
+            "/@class"
+        )
+        if rating_classes:
+            rating = next(
+                (
+                    int(c.split("-")[1])
+                    for c in rating_classes[0].split()
+                    if c.startswith("rated-")
+                ),
+                None,
+            )
+
+        # Match the like icon specifically: a review link lives in the same
+        # paragraph and also contains "-micro" in its class.
+        liked = bool(item.xpath('.//span[contains(@class, "liked-micro")]'))
+
+        film_data.append({"film_slug": slugs[0], "liked": liked, "rating": rating})
+
+    return film_data
+
+
+def _get_num_pages(page_html: str) -> int:
+    tree = html.fromstring(page_html)
+    pages = tree.xpath(
+        "//div[contains(@class, 'paginate-pages')]"
+        "//li[contains(@class, 'paginate-page')]/a/text()"
+    )
+    return int(pages[-1]) if pages else 1
 
 
 async def scrape_user_ratings(username: str) -> List[Dict[str, Any]]:
-    async def _fetch_page(session, url):
-        async with session.get(url) as response:
-            return await response.text()
+    """Scrapes every film in a user's profile with their rating and like."""
+    base_url = f"https://letterboxd.com/{username}/films"
 
-    base_url = f"https://letterboxd.com/{username}/films/by/date"
+    async def _fetch_page_async(session, url: str) -> str:
+        return await fetch_with_backoff(session, url, REQUEST_TIMEOUT)
 
-    # Use async sessions to make HTTP requests
-    async with aiohttp.ClientSession() as session:
-        first_page_html = await _fetch_page(session, base_url)
-        root_tree = html.fromstring(first_page_html)
+    with requests.Session(impersonate=IMPERSONATE) as session:
+        first_page_html = await _fetch_page_async(session, base_url)
+        num_pages = _get_num_pages(first_page_html)
 
-        if num_pages_res := root_tree.xpath(
-            "//div[@class='pagination']//li[@class='paginate-page']/a/text()"
-        ):
-            num_pages = int(num_pages_res[-1])
-        else:
-            num_pages = 1
-        urls = [base_url] + [
-            f"{base_url}/page/{page_num}" for page_num in range(2, num_pages + 1)
-        ]
+        urls = [f"{base_url}/page/{page_num}/" for page_num in range(2, num_pages + 1)]
 
-        # Fetch pages in batches with delay
-        pages = []
+        pages = [first_page_html]
         for i in range(0, len(urls), PAGES_PER_BATCH):
             batch_urls = urls[i : i + PAGES_PER_BATCH]
             batch_pages = await asyncio.gather(
-                *(_fetch_page(session, url) for url in batch_urls)
+                *(_fetch_page_async(session, url) for url in batch_urls)
             )
             pages.extend(batch_pages)
             if i + PAGES_PER_BATCH < len(urls):
                 await asyncio.sleep(BATCH_DELAY)
 
-        film_data = []
-        for page in pages:
-            tree = html.fromstring(page)
-            containers = tree.xpath("//li[@class='poster-container']")
-            for container in containers:
-                film_slug = container.xpath(
-                    ".//div[contains(@class, \
-                                            'linked-film-poster')]/@data-film-slug"
-                )[0]
-                liked = bool(container.xpath(".//span[contains(@class, 'like')]"))
+    film_data = []
+    for page in pages:
+        film_data.extend(_parse_gallery_page(page))
 
-                # Check if a rating exists and fetch the rating if there is one
-                rating = None
-                has_rating = container.xpath(
-                    ".//span[contains(@class, 'rating')]/@class"
-                )
-                if has_rating:
-                    has_rating = has_rating[0].split()
-                    rating = next(
-                        (c for c in has_rating if c.startswith("rated-")), None
-                    )
-                    rating = rating.split("-")[1] if rating else None
-
-                film_data.append(
-                    {"film_slug": film_slug, "liked": liked, "rating": rating}
-                )
-
-        return film_data
+    return film_data
 
 
 async def scrape_popular_pages(num_pages: int) -> List[Dict[str, Any]]:
     """Scrapes Letterboxd by most popular movies.
 
-    WARNING: Very Slow. We may need to consider another method.
+    WARNING: Very Slow. The popular browser renders its grid client-side, so
+    unlike the user galleries it cannot be fetched with a plain HTTP request.
     """
 
     async def _fetch_page(page, url):
