@@ -1,19 +1,16 @@
 import asyncio
 import random
 
-# Letterboxd throttles bursts; back off instead of hammering it.
+# Letterboxd throttles bursts; use back off
 MAX_RETRIES = 5
-INITIAL_BACKOFF = 0.5
+INITIAL_BACKOFF = 0.2
 BACKOFF_FACTOR = 1.0
 MAX_BACKOFF = 60.0
 JITTER = 0.3
-# Letterboxd returns 403 (not 429) when it throttles a burst of requests,
-# and it clears on its own, so treat it as retryable.
+
+# Letterboxd returns 403 when it throttles a burst of requests,
+# and it clears on its own, so treat it as retryable
 RETRY_STATUSES = {403, 429, 500, 502, 503, 504}
-
-
-class RateLimitError(RuntimeError):
-    """Raised when a URL keeps failing after exhausting all retries."""
 
 
 def _sleep_seconds(attempt: int, retry_after: str | None) -> float:
@@ -24,9 +21,10 @@ def _sleep_seconds(attempt: int, retry_after: str | None) -> float:
         except ValueError:
             pass
 
-    delay = min(INITIAL_BACKOFF * (BACKOFF_FACTOR**attempt), MAX_BACKOFF)
-    # Jitter avoids a thundering herd when many requests retry together.
-    # Clamp afterwards so jitter can't push the delay past the cap.
+    delay = min(INITIAL_BACKOFF * (BACKOFF_FACTOR ** attempt), MAX_BACKOFF)
+
+    # Jitter avoids a thundering herd when many requests retry together;
+    # clamp afterwards so jitter can't push the delay past the cap
     return min(delay * (1 + random.uniform(-JITTER, JITTER)), MAX_BACKOFF)
 
 
@@ -44,7 +42,7 @@ async def fetch_with_backoff(session, url: str, timeout: int) -> str:
                 response.raise_for_status()
                 return response.text
 
-            last_error = RateLimitError(f"HTTP {response.status_code} for {url}")
+            last_error = RuntimeError(f"HTTP {response.status_code} for {url}")
             if attempt < MAX_RETRIES - 1:
                 retry_after = response.headers.get("Retry-After")
                 await asyncio.sleep(_sleep_seconds(attempt, retry_after))
@@ -53,6 +51,6 @@ async def fetch_with_backoff(session, url: str, timeout: int) -> str:
         if attempt < MAX_RETRIES - 1:
             await asyncio.sleep(_sleep_seconds(attempt, None))
 
-    raise RateLimitError(
+    raise RuntimeError(
         f"Failed to fetch {url} after {MAX_RETRIES} attempts: {last_error}"
     )

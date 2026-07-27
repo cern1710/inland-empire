@@ -1,20 +1,28 @@
-from flask import Blueprint, Flask, request, jsonify
-from database.connect_to_db import connect_to_mongodb
-from database.db_utils import *
+import json
+
 import redis
 from bson import json_util
-import json
+from flask import Blueprint, Flask, jsonify, request
+
+from inland_empire.database.connect_to_db import connect_to_mongodb
+from inland_empire.database.db_utils import (
+    delete_movie_by_id,
+    get_all_movies,
+    get_movie_by_id,
+    insert_movie,
+)
 
 CACHE_EXPIRATION = 3600
 
 movies_bp = Blueprint("movies", __name__)
-client, db = connect_to_mongodb("config.json")
+client, db = connect_to_mongodb()
 redis_client = redis.Redis()
 
 
 @movies_bp.route("/movies", methods=["GET"])
 def get_movies():
-    if cached_movies := redis_client.get("all_movies"):
+    cached_movies = redis_client.get("all_movies")
+    if cached_movies:
         return json.loads(cached_movies)
 
     movies = get_all_movies(db)
@@ -25,7 +33,8 @@ def get_movies():
 
 @movies_bp.route("/movies/<int:tmdb_id>", methods=["GET"])
 def get_movie(tmdb_id: int):
-    if cached_movie := redis_client.get(f"movie:{tmdb_id}"):
+    cached_movie = redis_client.get(f"movie:{tmdb_id}")
+    if cached_movie:
         return json.loads(cached_movie)
 
     movie = get_movie_by_id(db, tmdb_id)

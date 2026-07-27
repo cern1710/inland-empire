@@ -1,0 +1,13 @@
+# Copy this file to config.yaml (in the same directory) and fill in your values
+tmdb:
+  api_key: YOUR_TMDB_API_KEY
+
+mongodb_local:
+  uri: "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.0.2"
+  database: letterboxd_db
+
+mongodb_atlas:
+  uri: "mongodb+srv://<username>:<password>@<username>.ivddo.mongodb.net/?retryWrites=true&w=majority"
+  database: letterboxd_db
+  username: YOUR_CLUSTER_NAME
+  password: YOUR_CLUSTER_PASSWORD

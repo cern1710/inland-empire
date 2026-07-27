@@ -1,9 +1,9 @@
-from typing import Dict, Any, List
+from typing import Any
 from pymongo.database import Database
 from pymongo.results import UpdateResult, DeleteResult
 
 
-def insert_movie(db: Database, movie_data: Dict[str, Any]) -> Dict[str, Any]:
+def insert_movie(db: Database, movie_data: dict[str, Any]) -> dict[str, Any]:
     """Insert a movie into the database. Update it if already in database."""
     collection = db["movies"]
     query = {"tmdb_id": movie_data["tmdb_id"]}  # TMDB DB = identifier
@@ -21,23 +21,23 @@ def insert_movie(db: Database, movie_data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def get_movie_by_id(db: Database, tmdb_id: int) -> Dict[str, Any]:
+def get_movie_by_id(db: Database, tmdb_id: int) -> dict[str, Any]:
     """Retrieve a movie from the database by its TMDB ID."""
     return db["movies"].find_one({"tmdb_id": tmdb_id})
 
 
-def get_all_movies(db: Database) -> List[Dict[str, Any]]:
+def get_all_movies(db: Database) -> list[dict[str, Any]]:
     """Retrieve all movies from the database."""
     return list(db["movies"].find())
 
 
-def delete_movie_by_id(db: Database, tmdb_id: int) -> Dict[str, Any]:
+def delete_movie_by_id(db: Database, tmdb_id: int) -> dict[str, Any]:
     """Delete a movie from the database by its TMDB ID."""
     result: DeleteResult = db["movies"].delete_one({"tmdb_id": tmdb_id})
     return {"acknowledged": result.acknowledged, "deleted_count": result.deleted_count}
 
 
-def purge_db(db: Database) -> Dict[str, Any]:
+def purge_db(db: Database) -> dict[str, Any]:
     """Delete entire movies collection from the database.
 
     WARNING: Use with extreme caution. This operation will

@@ -1,10 +1,6 @@
-import os
-import sys
-
 import pytest
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.http_utils import RateLimitError, _sleep_seconds, fetch_with_backoff
+from inland_empire.utils.http_utils import _sleep_seconds, fetch_with_backoff
 
 
 class _Response:
@@ -40,7 +36,7 @@ def no_sleep(monkeypatch):
     async def _instant(_seconds):
         return None
 
-    monkeypatch.setattr("utils.http_utils.asyncio.sleep", _instant)
+    monkeypatch.setattr("inland_empire.utils.http_utils.asyncio.sleep", _instant)
 
 
 @pytest.mark.asyncio
@@ -88,19 +84,22 @@ async def test_retries_on_network_error():
 async def test_raises_after_exhausting_retries():
     session = _FakeSession([_Response(429) for _ in range(5)])
 
-    with pytest.raises(RateLimitError):
+    with pytest.raises(RuntimeError):
         await fetch_with_backoff(session, "http://x", 30)
     assert session.calls == 5
 
 
 def test_backoff_grows_and_respects_retry_after():
-    # Compare averages: jitter makes any single pair of draws overlap-prone.
+    # Compare averages: jitter makes any single pair of draws overlap-prone
     early = sum(_sleep_seconds(0, None) for _ in range(50)) / 50
     later = sum(_sleep_seconds(3, None) for _ in range(50)) / 50
     assert early < later
-    # The cap holds even after jitter is applied.
+
+    # The cap holds even after jitter is applied
     assert all(_sleep_seconds(99, None) <= 60.0 for _ in range(50))
+
     # An explicit Retry-After header wins over the computed delay
     assert _sleep_seconds(0, "12") == 12.0
+
     # A malformed header falls back to exponential backoff
     assert _sleep_seconds(0, "soon") > 0

@@ -1,11 +1,6 @@
 import pytest
-import sys
-import os
 
-PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PARENT_DIR)
-
-from utils import write_to_csv, save_user_data_to_db, get_user_movie_data
+from inland_empire.utils import get_user_movie_data, save_user_data_to_db, write_to_csv
 
 
 @pytest.mark.asyncio

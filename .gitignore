@@ -1,6 +1,19 @@
+# Python
 __pycache__/
-*.html
-*.json
+*.pyc
+*.egg-info/
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+
+# Local secrets
+config/config.yaml
+
+# Scraper output
+data/*
+!data/.gitkeep
+
+# Misc local artifacts
 *.rdb
-*.csv
 .DS_Store

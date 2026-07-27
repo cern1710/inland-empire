@@ -1,20 +1,19 @@
-import json
-from tmdbv3api import TMDb, Movie, exceptions
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any
 
-DEFAULT_CONFIG_PATH = "../config.json"
+from tmdbv3api import Movie, TMDb, exceptions
+
+from inland_empire.config import load_config
 
 
-def init_tmdb(config_path: str = DEFAULT_CONFIG_PATH) -> None:
-    """Initialize TMDb API by setting up the API key."""
+def init_tmdb(config: dict | None = None) -> None:
+    """Initialise TMDb API by setting up the API key."""
+    config = config or load_config()
     tmdb = TMDb()
-    with open(config_path, "r") as file:
-        tmdb.api_key = json.load(file)["tmdb"]["api_key"]
-    return
+    tmdb.api_key = config["tmdb"]["api_key"]
 
 
-def get_tmdb_data(tmdb_id: int) -> Optional[Dict[str, Any]]:
+def get_tmdb_data(tmdb_id: int) -> dict[str, Any] | None:
     """Get movie information from TMDB based on TMDB ID."""
     movie = Movie()
     try:

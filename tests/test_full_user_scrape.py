@@ -1,12 +1,13 @@
 import csv
 import os
-import sys
 
 import pytest
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.scrape_movie_gallery import scrape_user_ratings
-from utils.user_movie_preprocessing import get_user_movie_data, write_to_csv
+from inland_empire.utils.scrape_movie_gallery import scrape_user_ratings
+from inland_empire.utils.user_movie_preprocessing import (
+    get_user_movie_data,
+    write_to_csv,
+)
 
 USERNAME = "cern1710"
 

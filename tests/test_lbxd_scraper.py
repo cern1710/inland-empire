@@ -1,11 +1,9 @@
 import os
-import sys
 
 import pytest
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.scrape_movie_gallery import _get_num_pages, _parse_gallery_page
-from utils.scrape_movie_data import parse_movie_data
+from inland_empire.utils.scrape_movie_data import parse_movie_data
+from inland_empire.utils.scrape_movie_gallery import _get_num_pages, _parse_gallery_page
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
 
@@ -37,6 +35,7 @@ def test_parse_gallery_extracts_ratings_and_likes(gallery_html):
 
     ratings = [film["rating"] for film in films if film["rating"] is not None]
     assert ratings, "expected at least one rated film"
+
     # Letterboxd rates out of 10 (rated-10 == 5 stars)
     assert all(1 <= rating <= 10 for rating in ratings)
     assert any(film["liked"] for film in films)

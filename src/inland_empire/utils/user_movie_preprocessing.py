@@ -1,22 +1,17 @@
-import sys
-import os
 import asyncio
 import csv
-from typing import List, Dict, Any
+import os
+from typing import Any
 
-SLEEP_INTERVAL = 1.0
+from inland_empire.database import connect_to_mongodb, insert_movie
+
+from .scrape_movie_data import scrape_movies
+from .scrape_movie_gallery import scrape_user_ratings
+
 CHUNK_SIZE = 200
 
-# Add parent directory to Python path
-PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(PARENT_DIR)
 
-from .scrape_movie_gallery import scrape_user_ratings
-from .scrape_movie_data import scrape_movies
-from database import connect_to_mongodb, insert_movie
-
-
-async def get_user_movie_data(username: str) -> List[Dict[str, Any]]:
+async def get_user_movie_data(username: str) -> list[dict[str, Any]]:
     film_slugs = await scrape_user_ratings(username)
     print(f"Found {len(film_slugs)} films for {username}!")
 
@@ -32,17 +27,22 @@ async def get_user_movie_data(username: str) -> List[Dict[str, Any]]:
         # TODO: what if another user's data is already in the database?
         chunk_data = await scrape_movies(chunk, username)
         user_movie_data.extend(chunk_data)
-        if i < chunk_len - 1:
-            await asyncio.sleep(SLEEP_INTERVAL)
 
     return user_movie_data
 
 
-def write_to_csv(username: str, user_movie_data: List[Dict[str, Any]]) -> None:
-    def _safe_get(data: Dict[str, any], key: str, default: str = ""):
+def write_to_csv(
+    username: str,
+    user_movie_data: list[dict[str, Any]],
+    output_dir: str | None = None,
+) -> None:
+    def _safe_get(data: dict[str, any], key: str, default: str = ""):
         return str(data.get(key, default)).replace(",", ";")
 
     filename = f"{username}.csv"
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        filename = os.path.join(output_dir, filename)
     fieldnames = [
         "tmdb_id",
         "title",
@@ -78,24 +78,26 @@ def write_to_csv(username: str, user_movie_data: List[Dict[str, Any]]) -> None:
                 print(f"Error processing movie data: {e}")
                 print(f"Problematic data: {data}")
 
-    print(f"Data has been written to {username}.csv")
+    print(f"Data has been written to {filename}")
 
 
-def scrape_user(username: str) -> List[Dict[str, Any]]:
+def scrape_user(username: str) -> list[dict[str, Any]]:
     """Scrapes every film a user has logged, with their rating and like.
 
     This is the synchronous entry point: given a Letterboxd username, it
     returns the fully populated movie data.
 
-        >>> movies = scrape_user("cern1710")
+        >>> movies = scrape_user("<username>")
     """
     return asyncio.run(get_user_movie_data(username))
 
 
-def scrape_user_to_csv(username: str) -> List[Dict[str, Any]]:
+def scrape_user_to_csv(
+    username: str, output_dir: str | None = None
+) -> list[dict[str, Any]]:
     """Scrapes a user's films and writes them to <username>.csv."""
     user_movie_data = scrape_user(username)
-    write_to_csv(username, user_movie_data)
+    write_to_csv(username, user_movie_data, output_dir=output_dir)
     return user_movie_data
 
 

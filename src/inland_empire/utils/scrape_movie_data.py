@@ -4,7 +4,7 @@ from typing import Any
 from curl_cffi import requests
 from lxml import html
 
-from .http_utils import RateLimitError, fetch_with_backoff
+from .http_utils import fetch_with_backoff
 
 IMPERSONATE = "chrome"
 REQUEST_TIMEOUT = 30
@@ -54,7 +54,8 @@ def parse_movie_data(response: str, url: str, movie, username) -> dict[str, Any]
 
         # Use find() for pattern matching and slicing
         num_ratings = None
-        if (start_index := response.find('"ratingCount":')) != -1:
+        start_index = response.find('"ratingCount":')
+        if start_index != -1:
             end_index = response.find(",", start_index)
             if end_index == -1:
                 end_index = response.find("}", start_index)
@@ -110,7 +111,7 @@ async def get_movie_data(url, session, movie, username) -> dict[str, Any] | None
     """Gets a movie's TMDB ID from a Letterboxd URL."""
     try:
         response = await fetch_with_backoff(session, url, REQUEST_TIMEOUT)
-    except RateLimitError as e:
+    except RuntimeError as e:
         print(f"Giving up on {url}: {e}")
         return None
     return parse_movie_data(response, url, movie, username)
@@ -121,7 +122,7 @@ async def scrape_movies(movie_list: list, username: str) -> list[dict[str, Any]]
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
     async def _bounded(movie):
-        # Cap in-flight requests so a large chunk doesn't trip rate limiting.
+        # Cap in-flight requests so a large chunk doesn't trip rate limiting
         async with semaphore:
             return await get_movie_data(
                 url.format(movie["film_slug"]), session, movie, username

@@ -1,14 +1,11 @@
 import pytest
-import sys
-import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import *
+from inland_empire.utils import get_tmdb_data, init_tmdb
 
 
 @pytest.fixture(scope="module")
 def tmdb_setup():
-    init_tmdb("../config.json")
+    init_tmdb()
 
 
 def remove_key_from_list_of_dicts(lst, key):

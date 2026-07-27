@@ -1,14 +1,16 @@
 import pytest
-import sys
-import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from database import *
+from inland_empire.database import (
+    connect_to_mongodb,
+    delete_movie_by_id,
+    get_all_movies,
+    insert_movie,
+)
 
 
 @pytest.fixture(scope="module")
 def db_connection():
-    client, db = connect_to_mongodb(config_path="../config.json")
+    client, db = connect_to_mongodb()
     yield db
     client.close()
 
